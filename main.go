@@ -1,39 +1,53 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
+	"log"
 	"os"
 
-	"github.com/NebojsaJovanovic95/gator.git/cli"
 	"github.com/NebojsaJovanovic95/gator.git/internal/config"
+	"github.com/NebojsaJovanovic95/gator.git/internal/database"
+	_ "github.com/lib/pq"
 )
 
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("not enough arguments")
-		os.Exit(1)
-	}
+type state struct {
+	db  *database.Queries
+	cfg *config.Config
+}
 
+func main() {
 	cfg, err := config.Read()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("error reading config: %v", err)
 	}
 
-	state := cli.NewState(&cfg)
-
-	commands := cli.Commands{
-		Handlers: make(map[string]func(*cli.State, cli.Command) error),
+	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		log.Fatalf("error connecting to db: %v", err)
 	}
-	commands.Register("login", cli.HandlerLogin)
+	defer db.Close()
+	dbQueries := database.New(db)
 
-	cmd := cli.Command{
-		Name: os.Args[1],
-		Args: os.Args[2:],
+	programState := &state{
+		db:  dbQueries,
+		cfg: &cfg,
 	}
 
-	if err := commands.Run(state, cmd); err != nil {
-		fmt.Println("error:", err)
-		os.Exit(1)
+	cmds := commands{
+		registeredCommands: make(map[string]func(*state, command) error),
+	}
+	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
+
+	if len(os.Args) < 2 {
+		log.Fatal("Usage: cli <command> [args...]")
+	}
+
+	cmdName := os.Args[1]
+	cmdArgs := os.Args[2:]
+
+	err = cmds.run(programState, command{Name: cmdName, Args: cmdArgs})
+	if err != nil {
+		log.Fatal(err)
 	}
 }

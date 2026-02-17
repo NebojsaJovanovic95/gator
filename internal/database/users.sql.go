@@ -7,7 +7,7 @@ package database
 
 import (
 	"context"
-	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -15,13 +15,13 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, name)
 VALUES ($1, $2, $3, $4)
-RETURNING id, name, created_at, updated_at
+RETURNING id, created_at, updated_at, name
 `
 
 type CreateUserParams struct {
 	ID        uuid.UUID
-	CreatedAt sql.NullTime
-	UpdatedAt sql.NullTime
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Name      string
 }
 
@@ -35,15 +35,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, created_at, updated_at FROM users
+SELECT id, created_at, updated_at, name FROM users
 WHERE name = $1
 `
 
@@ -52,9 +52,9 @@ func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
 	)
 	return i, err
 }

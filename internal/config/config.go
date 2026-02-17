@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 )
@@ -14,19 +13,26 @@ type Config struct {
 	CurrentUserName string `json:"current_user_name"`
 }
 
+func (cfg *Config) SetUser(userName string) error {
+	cfg.CurrentUserName = userName
+	return write(*cfg)
+}
+
 func Read() (Config, error) {
-	path, err := getConfigFilePath()
+	fullPath, err := getConfigFilePath()
 	if err != nil {
 		return Config{}, err
 	}
 
-	data, err := os.ReadFile(path)
+	file, err := os.Open(fullPath)
 	if err != nil {
 		return Config{}, err
 	}
+	defer file.Close()
 
-	var cfg Config
-	err = json.Unmarshal(data, &cfg)
+	decoder := json.NewDecoder(file)
+	cfg := Config{}
+	err = decoder.Decode(&cfg)
 	if err != nil {
 		return Config{}, err
 	}
@@ -34,29 +40,32 @@ func Read() (Config, error) {
 	return cfg, nil
 }
 
-func (c *Config) SetUser(name string) error {
-	c.CurrentUserName = name
-	return write(*c)
-}
-
 func getConfigFilePath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", errors.New("could not locate home directory")
+		return "", err
 	}
-	return filepath.Join(home, configFileName), nil
+	fullPath := filepath.Join(home, configFileName)
+	return fullPath, nil
 }
 
 func write(cfg Config) error {
-	path, err := getConfigFilePath()
+	fullPath, err := getConfigFilePath()
 	if err != nil {
 		return err
 	}
 
-	data, err := json.MarshalIndent(cfg, "", "  ")
+	file, err := os.Create(fullPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(cfg)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	return nil
 }
