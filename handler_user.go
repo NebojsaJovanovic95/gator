@@ -9,9 +9,26 @@ import (
 	"github.com/google/uuid"
 )
 
+func handlerFeeds(s *state, cmd command) error {
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("usage: %v", cmd.Name)
+	}
+
+	feeds, err := s.db.GetAllFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to fetch feeds: %w", err)
+	}
+
+	for _, feed := range feeds {
+		fmt.Printf("Name: %s\nURL: %s\nAddedBy: %s\n", feed.Name, feed.Url, feed.Username)
+	}
+
+	return nil
+}
+
 func handlerAddFeed(s *state, cmd command) error {
 	if len(cmd.Args) != 2 {
-		return fmt.Errorf("usage: %v <name> <url>")
+		return fmt.Errorf("usage: %v <name> <url>", cmd.Name)
 	}
 
 	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
