@@ -9,6 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
+func handlerFollow(s *state, cmd command) error {
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("usage: %v", cmd.Name)
+	}
+
+	follow, err := s.db.CreateFeedFollow(context.Background(), cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("failed to follow: %w", err)
+	}
+	fmt.Fprintf("%s", follow.FeedName)
+
+	return nil
+}
+
 func handlerFeeds(s *state, cmd command) error {
 	if len(cmd.Args) != 0 {
 		return fmt.Errorf("usage: %v", cmd.Name)
