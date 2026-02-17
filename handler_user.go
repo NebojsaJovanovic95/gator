@@ -9,12 +9,31 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerAddFeed(s *stat, cmd command) error {
+func handlerAddFeed(s *state, cmd command) error {
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("usage: %v <name> <url>")
 	}
 
-	feed, err := s.db.CreateFeed()
+	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("failed to regidter command with current user: %s \nerror: %w", s.cfg.CurrentUserName, err)
+	}
+
+	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.Args[0],
+		Url:       cmd.Args[1],
+		UserID:    user.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create feed: %w", err)
+	}
+
+	fmt.Printf("%+v\n", feed)
+
+	return nil
 }
 
 func handlerAgg(s *state, cmd command) error {
