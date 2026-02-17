@@ -9,6 +9,37 @@ import (
 	"github.com/google/uuid"
 )
 
+func handlerReset(s *state, cmd command) error {
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("usage: %v", cmd.Name)
+	}
+	if err := s.db.DeleteAllUsers(context.Background()); err != nil {
+		return fmt.Errorf("couldn't delete all users: %w", err)
+	}
+	return nil
+}
+
+func handlerUsers(s *state, cmd command) error {
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("usage: %v", cmd.Name)
+	}
+
+	users, err := s.db.GetAllUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("couldn't retrieve all users: %w", err)
+	}
+
+	for _, user := range users {
+		fmt.Printf("- %s", user.Name)
+		if user.Name == s.cfg.CurrentUserName {
+			fmt.Printf(" (current)")
+		}
+		fmt.Printf("\n")
+	}
+
+	return nil
+}
+
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: %v <name>", cmd.Name)
