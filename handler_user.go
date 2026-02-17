@@ -9,6 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
+func handlerAddFeed(s *stat, cmd command) error {
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("usage: %v <name> <url>")
+	}
+
+	feed, err := s.db.CreateFeed()
+}
+
 func handlerAgg(s *state, cmd command) error {
 	if len(cmd.Args) != 0 {
 		return fmt.Errorf("usage: %v", cmd.Name)
