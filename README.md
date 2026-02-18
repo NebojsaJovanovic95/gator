@@ -1,5 +1,5 @@
 # Gator
-
+gator
 ## requirements
 goose
 sqlc
