@@ -117,13 +117,12 @@ const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
 SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at
 FROM feeds
 WHERE last_fetched_at IS NULL
-   OR last_fetched_at < NOW() - $1
+   OR (NOW() - last_fetched_at) > $1::interval
 ORDER BY last_fetched_at ASC NULLS FIRST
 LIMIT 1
 `
 
-// :arg refresh_interval interval
-func (q *Queries) GetNextFeedToFetch(ctx context.Context, dollar_1 interface{}) (Feed, error) {
+func (q *Queries) GetNextFeedToFetch(ctx context.Context, dollar_1 int64) (Feed, error) {
 	row := q.db.QueryRowContext(ctx, getNextFeedToFetch, dollar_1)
 	var i Feed
 	err := row.Scan(

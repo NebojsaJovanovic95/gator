@@ -22,10 +22,9 @@ WHERE id = $1
 RETURNING *;
 
 -- name: GetNextFeedToFetch :one
--- :arg refresh_interval interval
 SELECT *
 FROM feeds
 WHERE last_fetched_at IS NULL
-   OR last_fetched_at < NOW() - $1
+   OR (NOW() - last_fetched_at) > $1::interval
 ORDER BY last_fetched_at ASC NULLS FIRST
 LIMIT 1;
