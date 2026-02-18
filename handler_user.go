@@ -9,6 +9,23 @@ import (
 	"github.com/google/uuid"
 )
 
+func handlerUnfollow(s *state, cmd command, user database.User) error {
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("usage: %v", cmd.Name)
+	}
+
+	url := cmd.Args[0]
+
+	if err := s.db.DeleteFeedFollowForUser(context.Background(), database.DeleteFeedFollowForUserParams{
+		Name: user.Name,
+		Url:  url,
+	}); err != nil {
+		return fmt.Errorf("failed to delete follow %s: %w", url, err)
+	}
+
+	return nil
+}
+
 func handlerUsersFollows(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 0 {
 		return fmt.Errorf("usage: %v", cmd.Name)
